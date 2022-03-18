@@ -49,6 +49,8 @@ func New() *tui {
 
 func (t *tui) refreshGroupsAndProcesses() {
 	gTop := t.getGroupProcessesMap()
+
+	// Adds new groups created to the group list
 	for g, p := range gTop {
 		gCopy := g
 		if _, ok := t.groupToProcessesInfo[gCopy]; !ok {
@@ -58,6 +60,20 @@ func (t *tui) refreshGroupsAndProcesses() {
 			})
 		}
 	}
+
+	// Remove groups from the group list that have removed from supervisord
+	for g, _ := range t.groupToProcessesInfo {
+		gCopy := g
+		if _, ok := gTop[gCopy]; !ok {
+			indices := t.groupLayout.FindItems(gCopy, "", false, false)
+			if len(indices) == 0 {
+				continue
+			}
+
+			t.groupLayout.RemoveItem(indices[0])
+		}
+	}
+
 }
 
 func (t *tui) Start() {
@@ -127,13 +143,17 @@ func (t *tui) setProcesses(group string) {
 }
 
 func (t *tui) getSupervisorLayout() *tview.Flex {
+	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	flex.AddItem(t.getGroupProcessListLayout(), 0, 2, false)
+	flex.AddItem(tview.NewBox().SetBorder(false).SetTitle("Main info"), 0, 5, false)
+
+	return flex
+}
+
+func (t *tui) getGroupProcessListLayout() *tview.Flex {
 	groupProcessLists := tview.NewFlex().SetDirection(tview.FlexRow)
 	groupProcessLists.AddItem(t.groupLayout, 0, 1, false)
 	groupProcessLists.AddItem(t.processLayout, 0, 1, false)
 
-	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	flex.AddItem(groupProcessLists, 0, 2, false)
-	flex.AddItem(tview.NewBox().SetBorder(false).SetTitle("Main info"), 0, 5, false)
-
-	return flex
+	return groupProcessLists
 }
