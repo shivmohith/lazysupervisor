@@ -13,7 +13,7 @@ import (
 type tui struct {
 	client supervisord.Client
 
-	groupToProcessesInfo map[string][]gosupervisord.ProcessInfo
+	groupToProcessesInfo map[string]map[string]gosupervisord.ProcessInfo
 
 	app    *tview.Application
 	layout *tview.Flex
@@ -21,9 +21,12 @@ type tui struct {
 	headerLayout *tview.TextView
 	footerLayout *tview.TextView
 
-	groups        map[string]struct{}
 	groupLayout   *tview.List
 	processLayout *tview.List
+	infoTextView  *tview.TextView
+
+	selectedGroup   string
+	selectedProcess string
 }
 
 func New() *tui {
@@ -42,8 +45,12 @@ func New() *tui {
 	t.groupToProcessesInfo = t.getGroupProcessesMap()
 	t.setGroupLayout()
 	t.setProcessLayout()
+	t.setInfoTextView()
+
 	t.setLayout()
 
+	t.selectedGroup, _ = t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
+	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
 	return t
 }
 
@@ -51,12 +58,12 @@ func (t *tui) refreshGroupsAndProcesses() {
 	gTop := t.getGroupProcessesMap()
 
 	// Adds new groups created to the group list
-	for g, p := range gTop {
+	for g, pMap := range gTop {
 		gCopy := g
 		if _, ok := t.groupToProcessesInfo[gCopy]; !ok {
-			t.groupToProcessesInfo[gCopy] = p
+			t.groupToProcessesInfo[gCopy] = pMap
 			t.groupLayout.AddItem(gCopy, "", 0, func() {
-				t.setProcesses(gCopy)
+				t.handleGroupSelect(gCopy)
 			})
 		}
 	}
@@ -111,11 +118,18 @@ func (t *tui) setGroupLayout() {
 	for g, _ := range t.groupToProcessesInfo {
 		gCopy := g
 		list.AddItem(g, "", 0, func() {
-			t.setProcesses(gCopy)
+			t.handleGroupSelect(gCopy)
 		})
 	}
 
 	t.groupLayout = list
+}
+
+func (t *tui) handleGroupSelect(group string) {
+	t.selectedGroup = group
+	t.setProcesses(group)
+	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
+	t.showInfo()
 }
 
 func (t *tui) setProcessLayout() {
@@ -137,15 +151,23 @@ func (t *tui) setProcessLayout() {
 func (t *tui) setProcesses(group string) {
 	t.processLayout.Clear()
 
-	for _, p := range t.groupToProcessesInfo[group] {
-		t.processLayout.AddItem(p.Name, "", 0, nil)
+	for p, _ := range t.groupToProcessesInfo[group] {
+		pCopy := p
+		t.processLayout.AddItem(pCopy, "", 0, func() {
+			t.handleProcessSelect(pCopy)
+		})
 	}
+}
+
+func (t *tui) handleProcessSelect(process string) {
+	t.selectedProcess = process
+	t.showInfo()
 }
 
 func (t *tui) getSupervisorLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
 	flex.AddItem(t.getGroupProcessListLayout(), 0, 2, false)
-	flex.AddItem(tview.NewBox().SetBorder(false).SetTitle("Main info"), 0, 5, false)
+	flex.AddItem(t.getProcessInfoLayout(), 0, 5, false)
 
 	return flex
 }
@@ -156,4 +178,42 @@ func (t *tui) getGroupProcessListLayout() *tview.Flex {
 	groupProcessLists.AddItem(t.processLayout, 0, 1, false)
 
 	return groupProcessLists
+}
+
+func (t *tui) getProcessInfoLayout() *tview.Flex {
+	flex := tview.NewFlex().SetDirection(tview.FlexRow)
+	flex.AddItem(t.getTabsLayout(), 0, 1, false)
+	flex.AddItem(t.infoTextView, 0, 12, false)
+
+	return flex
+}
+
+func (t *tui) getTabsLayout() *tview.Flex {
+	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	flex.AddItem(createButton("Info", func() {
+		t.showInfo()
+	}), 0, 1, false)
+	flex.AddItem(createButton("Stdout Logs", func() {
+		t.infoTextView.SetText("Clicked stdout logs tab!")
+	}), 0, 1, false)
+	flex.AddItem(createButton("Stderr Logs", func() {
+		t.infoTextView.SetText("Clicked stderr logs tab!")
+	}), 0, 1, false)
+	flex.SetBorder(true)
+
+	return flex
+}
+
+func (t *tui) setInfoTextView() {
+	textView := tview.NewTextView()
+	textView.SetBorder(true)
+
+	t.infoTextView = textView
+}
+
+func createButton(name string, handler func()) *tview.Button {
+	button := tview.NewButton(name).SetSelectedFunc(handler)
+	button.SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+
+	return button
 }
