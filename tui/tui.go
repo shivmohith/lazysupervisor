@@ -10,7 +10,7 @@ import (
 	log "github.com/sirupsen/logrus"
 )
 
-type tui struct {
+type Tui struct {
 	client supervisord.Client
 
 	groupToProcessesInfo map[string]map[string]gosupervisord.ProcessInfo
@@ -19,7 +19,7 @@ type tui struct {
 	layout *tview.Flex
 
 	headerLayout *tview.TextView
-	footerLayout *tview.TextView
+	// footerLayout *tview.TextView
 
 	groupLayout   *tview.List
 	processLayout *tview.List
@@ -29,8 +29,8 @@ type tui struct {
 	selectedProcess string
 }
 
-func New(client supervisord.Client) *tui {
-	t := new(tui)
+func New(client supervisord.Client) *Tui {
+	t := new(Tui)
 
 	t.client = client
 
@@ -47,10 +47,11 @@ func New(client supervisord.Client) *tui {
 
 	t.selectedGroup, _ = t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
 	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
+
 	return t
 }
 
-func (t *tui) refreshGroupsAndProcesses() {
+func (t *Tui) refreshGroupsAndProcesses() {
 	gTop := t.getGroupProcessesMap()
 
 	// Adds new groups created to the group list
@@ -65,7 +66,7 @@ func (t *tui) refreshGroupsAndProcesses() {
 	}
 
 	// Remove groups from the group list that have removed from supervisord
-	for g, _ := range t.groupToProcessesInfo {
+	for g := range t.groupToProcessesInfo {
 		gCopy := g
 		if _, ok := gTop[gCopy]; !ok {
 			indices := t.groupLayout.FindItems(gCopy, "", false, false)
@@ -76,10 +77,9 @@ func (t *tui) refreshGroupsAndProcesses() {
 			t.groupLayout.RemoveItem(indices[0])
 		}
 	}
-
 }
 
-func (t *tui) Start() error {
+func (t *Tui) Start() error {
 	log.Info("Starting the tui app")
 
 	runEvery(1*time.Second, func() {
@@ -89,7 +89,7 @@ func (t *tui) Start() error {
 	return t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run()
 }
 
-func (t *tui) setHeader() {
+func (t *Tui) setHeader() {
 	header := tview.NewTextView()
 	header.SetText("Welcome to Supervisor TUI")
 	header.SetTextAlign(tview.AlignCenter)
@@ -99,19 +99,21 @@ func (t *tui) setHeader() {
 	t.headerLayout = header
 }
 
-func (t *tui) setLayout() {
+func (t *Tui) setLayout() {
+	mainLayoutProportion := 12
+
 	t.layout = tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.headerLayout, 0, 1, false).
-		AddItem(t.getSupervisorLayout(), 0, 12, false)
+		AddItem(t.getMainLayout(), 0, mainLayoutProportion, false)
 }
 
-func (t *tui) setGroupLayout() {
+func (t *Tui) setGroupLayout() {
 	list := tview.NewList()
 	list.ShowSecondaryText(false)
 	list.SetBorder(true)
 	list.SetTitle("Group")
 
-	for g, _ := range t.groupToProcessesInfo {
+	for g := range t.groupToProcessesInfo {
 		gCopy := g
 		list.AddItem(g, "", 0, func() {
 			t.handleGroupSelect(gCopy)
@@ -121,14 +123,14 @@ func (t *tui) setGroupLayout() {
 	t.groupLayout = list
 }
 
-func (t *tui) handleGroupSelect(group string) {
+func (t *Tui) handleGroupSelect(group string) {
 	t.selectedGroup = group
 	t.setProcesses(group)
 	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
 	t.showInfo()
 }
 
-func (t *tui) setProcessLayout() {
+func (t *Tui) setProcessLayout() {
 	list := tview.NewList()
 	list.ShowSecondaryText(false)
 	list.SetBorder(true)
@@ -144,10 +146,10 @@ func (t *tui) setProcessLayout() {
 	t.processLayout = list
 }
 
-func (t *tui) setProcesses(group string) {
+func (t *Tui) setProcesses(group string) {
 	t.processLayout.Clear()
 
-	for p, _ := range t.groupToProcessesInfo[group] {
+	for p := range t.groupToProcessesInfo[group] {
 		pCopy := p
 		t.processLayout.AddItem(pCopy, "", 0, func() {
 			t.handleProcessSelect(pCopy)
@@ -155,20 +157,24 @@ func (t *tui) setProcesses(group string) {
 	}
 }
 
-func (t *tui) handleProcessSelect(process string) {
+func (t *Tui) handleProcessSelect(process string) {
 	t.selectedProcess = process
 	t.showInfo()
 }
 
-func (t *tui) getSupervisorLayout() *tview.Flex {
+func (t *Tui) getMainLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	flex.AddItem(t.getGroupProcessListLayout(), 0, 2, false)
-	flex.AddItem(t.getProcessInfoLayout(), 0, 5, false)
+
+	groupProcessListLayoutProportion := 2
+	flex.AddItem(t.getGroupProcessListLayout(), 0, groupProcessListLayoutProportion, false)
+
+	processInfoLayoutProportion := 5
+	flex.AddItem(t.getProcessInfoLayout(), 0, processInfoLayoutProportion, false)
 
 	return flex
 }
 
-func (t *tui) getGroupProcessListLayout() *tview.Flex {
+func (t *Tui) getGroupProcessListLayout() *tview.Flex {
 	groupProcessLists := tview.NewFlex().SetDirection(tview.FlexRow)
 	groupProcessLists.AddItem(t.groupLayout, 0, 1, false)
 	groupProcessLists.AddItem(t.processLayout, 0, 1, false)
@@ -176,17 +182,19 @@ func (t *tui) getGroupProcessListLayout() *tview.Flex {
 	return groupProcessLists
 }
 
-func (t *tui) getProcessInfoLayout() *tview.Flex {
+func (t *Tui) getProcessInfoLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
 	flex.AddItem(t.getTabsLayout(), 0, 1, false)
-	flex.AddItem(t.infoTextView, 0, 12, false)
+
+	infoTextViewProportion := 12
+	flex.AddItem(t.infoTextView, 0, infoTextViewProportion, false)
 
 	return flex
 }
 
-func (t *tui) getTabsLayout() *tview.Flex {
+func (t *Tui) getTabsLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
-	
+
 	flex.AddItem(createButton("Info", func() {
 		t.showInfo()
 	}), 0, 1, false)
@@ -202,7 +210,7 @@ func (t *tui) getTabsLayout() *tview.Flex {
 	return flex
 }
 
-func (t *tui) setInfoTextView() {
+func (t *Tui) setInfoTextView() {
 	textView := tview.NewTextView()
 	textView.SetBorder(true)
 	textView.SetWrap(true)

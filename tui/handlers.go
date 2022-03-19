@@ -20,7 +20,7 @@ Stdout log file: %v
 Stderr log file: %v
 `
 
-func (t *tui) showInfo() {
+func (t *Tui) showInfo() {
 	pInfo := t.groupToProcessesInfo[t.selectedGroup][t.selectedProcess]
 
 	info := fmt.Sprintf(
@@ -41,7 +41,7 @@ func (t *tui) showInfo() {
 	t.infoTextView.SetText(info)
 }
 
-func (t *tui) tailStdoutLogs() {
+func (t *Tui) tailStdoutLogs() {
 	t.infoTextView.Clear()
 
 	info := t.groupToProcessesInfo[t.selectedGroup][t.selectedProcess]
@@ -76,14 +76,14 @@ func (t *tui) tailStdoutLogs() {
 
 			if logSegment.Overflow {
 				// TODO: configure this
+				// nolint:gomnd
 				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}()
-
 }
 
-func (t *tui) tailStderrLogs() {
+func (t *Tui) tailStderrLogs() {
 	t.infoTextView.Clear()
 
 	info := t.groupToProcessesInfo[t.selectedGroup][t.selectedProcess]
@@ -118,9 +118,9 @@ func (t *tui) tailStderrLogs() {
 
 			if logSegment.Overflow {
 				// TODO: configure this
+				// nolint:gomnd
 				time.Sleep(500 * time.Millisecond)
 			}
 		}
 	}()
-
 }

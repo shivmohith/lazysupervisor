@@ -11,7 +11,12 @@ import (
 )
 
 func main() {
-	logFileHandler, err := os.OpenFile("/home/shivmohith/go_personal_projects/tui-supervisor/tui.log", os.O_APPEND|os.O_CREATE|os.O_RDWR, 0666)
+	// nolint:gomnd
+	logFileHandler, err := os.OpenFile(
+		"/home/shivmohith/go_personal_projects/tui-supervisor/tui.log",
+		os.O_APPEND|os.O_CREATE|os.O_RDWR,
+		0666,
+	)
 	if err != nil {
 		fmt.Printf("error opening file: %v", err)
 	}

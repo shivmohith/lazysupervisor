@@ -2,7 +2,7 @@ package tui
 
 import "github.com/shivmohith/go-supervisord"
 
-func (t *tui) getGroupProcessesMap() map[string]map[string]supervisord.ProcessInfo {
+func (t *Tui) getGroupProcessesMap() map[string]map[string]supervisord.ProcessInfo {
 	groupToProcesses := make(map[string]map[string]supervisord.ProcessInfo)
 
 	// TODO: do not ignore error

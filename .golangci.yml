@@ -1,0 +1,72 @@
+run:
+  timeout: 5m
+  tests: true
+  skip-dirs-use-default: true
+  allow-parallel-runners: true
+
+linters:
+  disable-all: false
+  fast: false
+  enable:
+    - bodyclose
+    - deadcode
+    - depguard
+    - dogsled
+    - errcheck
+    - funlen
+    - gochecknoinits
+    - goconst
+    - gocritic
+    - gocyclo
+    - gofmt
+    - goimports
+    - revive
+    - gomnd
+    - goprintffuncname
+    - gosec
+    - gosimple
+    - govet
+    - ineffassign
+    - lll
+    - misspell
+    - nakedret
+    - noctx
+    - nolintlint
+    - rowserrcheck
+    - exportloopref
+    - staticcheck
+    - structcheck
+    - stylecheck
+    - typecheck
+    - unconvert
+    - unparam
+    - unused
+    - varcheck
+    - whitespace
+    - asciicheck
+    - gochecknoglobals
+    - gocognit
+    - godot
+    - goerr113
+    - nestif
+    - prealloc
+    - testpackage
+    - wsl
+
+issues:
+    exclude-rules:
+    - path: _test\.go
+      linters:
+        - dupl
+        - funlen
+        - noctx
+        - wsl
+        - goerr113
+        - testpackage
+        - staticcheck
+    - path: main\.go
+      linters:
+        - funlen
+    - linters:
+        - lll
+      source: "^//go:generate "
