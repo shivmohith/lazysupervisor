@@ -1,13 +1,13 @@
 package tui
 
 import (
-	"log"
 	"time"
 
 	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	gosupervisord "github.com/shivmohith/go-supervisord"
 	"github.com/shivmohith/tui-supervisor/supervisord"
+	log "github.com/sirupsen/logrus"
 )
 
 type tui struct {
@@ -29,15 +29,11 @@ type tui struct {
 	selectedProcess string
 }
 
-func New() *tui {
+func New(client supervisord.Client) *tui {
 	t := new(tui)
 
-	client, err := supervisord.NewClient()
-	if err != nil {
-		log.Fatalf("failed to get new supervisord client because %v", err)
-	}
-
 	t.client = client
+
 	t.app = tview.NewApplication()
 
 	t.setHeader()
@@ -83,14 +79,14 @@ func (t *tui) refreshGroupsAndProcesses() {
 
 }
 
-func (t *tui) Start() {
+func (t *tui) Start() error {
+	log.Info("Starting the tui app")
+
 	runEvery(1*time.Second, func() {
 		t.refreshGroupsAndProcesses()
 	})
 
-	if err := t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run(); err != nil {
-		log.Fatalf("failed to run the tui app because %v", err)
-	}
+	return t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run()
 }
 
 func (t *tui) setHeader() {
@@ -190,15 +186,17 @@ func (t *tui) getProcessInfoLayout() *tview.Flex {
 
 func (t *tui) getTabsLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
+	
 	flex.AddItem(createButton("Info", func() {
 		t.showInfo()
 	}), 0, 1, false)
 	flex.AddItem(createButton("Stdout Logs", func() {
-		t.infoTextView.SetText("Clicked stdout logs tab!")
+		t.tailStdoutLogs()
 	}), 0, 1, false)
 	flex.AddItem(createButton("Stderr Logs", func() {
-		t.infoTextView.SetText("Clicked stderr logs tab!")
+		t.tailStderrLogs()
 	}), 0, 1, false)
+
 	flex.SetBorder(true)
 
 	return flex
@@ -207,6 +205,8 @@ func (t *tui) getTabsLayout() *tview.Flex {
 func (t *tui) setInfoTextView() {
 	textView := tview.NewTextView()
 	textView.SetBorder(true)
+	textView.SetWrap(true)
+	textView.SetFocusFunc(nil)
 
 	t.infoTextView = textView
 }
