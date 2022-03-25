@@ -1,6 +1,12 @@
 package tui
 
-import "github.com/rivo/tview"
+import (
+	"fmt"
+
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+	log "github.com/sirupsen/logrus"
+)
 
 func (t *Tui) setProcessLayout() {
 	list := tview.NewList()
@@ -15,18 +21,46 @@ func (t *Tui) setProcessLayout() {
 		}
 	}
 
+	list.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		if event.Key() == tcell.KeyRune {
+			switch event.Rune() {
+			case 'm':
+				t.processModal.SetText(fmt.Sprintf(`Group Selected: %s
+Process Selected: %s`, t.selectedGroup, t.selectedProcess))
+
+				pages := tview.NewPages().
+					AddPage("background", t.layout, true, true).
+					AddPage("modal", t.processModal, true, true)
+				t.app.SetRoot(pages, true)
+			}
+		}
+
+		return event
+	})
+
 	t.processLayout = list
-}
 
-func (t *Tui) setProcesses(group string) {
-	t.processLayout.Clear()
+	modal := tview.NewModal().
+		AddButtons([]string{"Start Process", "Stop Process", "Cancel"}).
+		SetDoneFunc(func(buttonIndex int, buttonLabel string) {
+			processName := fmt.Sprintf("%s:%s", t.selectedGroup, t.selectedProcess)
 
-	for p := range t.groupToProcessesInfo[group] {
-		pCopy := p
-		t.processLayout.AddItem(pCopy, "", 0, func() {
-			t.handleProcessSelect(pCopy)
+			switch buttonLabel {
+			case "Start Process":
+				if err := t.client.StartProcess(processName, false); err != nil {
+					log.Errorf("starting process %s: %v", processName, err)
+				}
+			case "Stop Process":
+				if err := t.client.StopProcess(processName, false); err != nil {
+					log.Errorf("stopping process %s: %v", processName, err)
+				}
+			}
+
+			t.app.SetRoot(t.layout, true).SetFocus(t.processLayout)
 		})
-	}
+
+	t.processModal = modal
+
 }
 
 func (t *Tui) handleProcessSelect(process string) {

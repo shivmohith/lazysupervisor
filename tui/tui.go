@@ -24,6 +24,9 @@ type Tui struct {
 	tabsLayout    *tview.Flex
 	infoTextView  *tview.TextView
 
+	processModal *tview.Modal
+	groupModal   *tview.Modal
+
 	selectedGroup   string
 	selectedProcess string
 

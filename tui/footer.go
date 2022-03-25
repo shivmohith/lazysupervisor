@@ -13,7 +13,7 @@ func (t *Tui) setFooter() {
 	footer.SetTitleColor(tcell.ColorOrange)
 
 	footer.SetText(
-		`App - q: quit; Tab: navigate through panels;
+		`App - q: quit; Tab: navigate through panels; m: view more commands (applicable on process and group panel) 
 Tabs panel - 1: Info; 2: Stdout Logs; 3: Stderr Logs`,
 	)
 	footer.SetTextColor(tcell.ColorOrange)
