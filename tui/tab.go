@@ -1,6 +1,9 @@
 package tui
 
-import "github.com/rivo/tview"
+import (
+	"github.com/gdamore/tcell/v2"
+	"github.com/rivo/tview"
+)
 
 func (t *Tui) setTabsLayout() {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
@@ -16,6 +19,22 @@ func (t *Tui) setTabsLayout() {
 	}), 0, 1, false)
 
 	flex.SetBorder(true)
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyRune:
+			switch event.Rune() {
+			case '1':
+				t.app.SetFocus(flex.GetItem(0))
+			case '2':
+				t.app.SetFocus(flex.GetItem(1))
+			case '3':
+				t.app.SetFocus(flex.GetItem(2))
+			}
+		}
+
+		return event
+	})
 
 	t.tabsLayout = flex
 }

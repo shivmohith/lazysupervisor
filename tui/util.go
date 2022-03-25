@@ -1,6 +1,10 @@
 package tui
 
-import "time"
+import (
+	"time"
+
+	"github.com/rivo/tview"
+)
 
 func runEvery(d time.Duration, f func()) {
 	go func() {
@@ -8,4 +12,11 @@ func runEvery(d time.Duration, f func()) {
 			f()
 		}
 	}()
+}
+
+func createButton(name string, handler func()) *tview.Button {
+	button := tview.NewButton(name).SetSelectedFunc(handler)
+	button.SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+
+	return button
 }

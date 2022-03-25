@@ -28,6 +28,9 @@ type Tui struct {
 
 	selectedGroup   string
 	selectedProcess string
+
+	panels                      map[uint32]tview.Primitive
+	currentPanelInFocusPosition uint32
 }
 
 func New(client supervisord.Client) *Tui {
@@ -49,6 +52,8 @@ func New(client supervisord.Client) *Tui {
 
 	t.selectedGroup, _ = t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
 	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
+
+	t.setPanels()
 
 	return t
 }
@@ -104,9 +109,25 @@ func (t *Tui) setHeader() {
 func (t *Tui) setLayout() {
 	mainLayoutProportion := 12
 
-	t.layout = tview.NewFlex().SetDirection(tview.FlexRow).
+	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.headerLayout, 0, 1, false).
 		AddItem(t.getMainLayout(), 0, mainLayoutProportion, false)
+
+	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
+		switch event.Key() {
+		case tcell.KeyTab:
+			t.app.SetFocus(t.panels[t.currentPanelInFocusPosition])
+			t.currentPanelInFocusPosition++
+
+			if int(t.currentPanelInFocusPosition) > len(t.panels) {
+				t.currentPanelInFocusPosition = 1
+			}
+		}
+
+		return event
+	})
+
+	t.layout = flex
 }
 
 func (t *Tui) getMainLayout() *tview.Flex {
@@ -148,9 +169,13 @@ func (t *Tui) setInfoTextView() {
 	t.infoTextView = textView
 }
 
-func createButton(name string, handler func()) *tview.Button {
-	button := tview.NewButton(name).SetSelectedFunc(handler)
-	button.SetBackgroundColor(tview.Styles.PrimitiveBackgroundColor)
+func (t *Tui) setPanels() {
+	t.panels = map[uint32]tview.Primitive{
+		1: t.groupLayout,
+		2: t.processLayout,
+		3: t.tabsLayout,
+		4: t.infoTextView,
+	}
 
-	return button
+	t.currentPanelInFocusPosition = 1
 }
