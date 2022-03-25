@@ -23,6 +23,7 @@ type Tui struct {
 
 	groupLayout   *tview.List
 	processLayout *tview.List
+	tabsLayout    *tview.Flex
 	infoTextView  *tview.TextView
 
 	selectedGroup   string
@@ -39,10 +40,11 @@ func New(client supervisord.Client) *Tui {
 	t.setHeader()
 
 	t.groupToProcessesInfo = t.getGroupProcessesMap()
+
 	t.setGroupLayout()
 	t.setProcessLayout()
+	t.setTabsLayout()
 	t.setInfoTextView()
-
 	t.setLayout()
 
 	t.selectedGroup, _ = t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
@@ -107,61 +109,6 @@ func (t *Tui) setLayout() {
 		AddItem(t.getMainLayout(), 0, mainLayoutProportion, false)
 }
 
-func (t *Tui) setGroupLayout() {
-	list := tview.NewList()
-	list.ShowSecondaryText(false)
-	list.SetBorder(true)
-	list.SetTitle("Group")
-
-	for g := range t.groupToProcessesInfo {
-		gCopy := g
-		list.AddItem(g, "", 0, func() {
-			t.handleGroupSelect(gCopy)
-		})
-	}
-
-	t.groupLayout = list
-}
-
-func (t *Tui) handleGroupSelect(group string) {
-	t.selectedGroup = group
-	t.setProcesses(group)
-	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
-	t.showInfo()
-}
-
-func (t *Tui) setProcessLayout() {
-	list := tview.NewList()
-	list.ShowSecondaryText(false)
-	list.SetBorder(true)
-	list.SetTitle("Process")
-
-	if t.groupLayout.GetItemCount() > 0 {
-		g, _ := t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
-		for _, p := range t.groupToProcessesInfo[g] {
-			list.AddItem(p.Name, "", 0, nil)
-		}
-	}
-
-	t.processLayout = list
-}
-
-func (t *Tui) setProcesses(group string) {
-	t.processLayout.Clear()
-
-	for p := range t.groupToProcessesInfo[group] {
-		pCopy := p
-		t.processLayout.AddItem(pCopy, "", 0, func() {
-			t.handleProcessSelect(pCopy)
-		})
-	}
-}
-
-func (t *Tui) handleProcessSelect(process string) {
-	t.selectedProcess = process
-	t.showInfo()
-}
-
 func (t *Tui) getMainLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
 
@@ -184,28 +131,10 @@ func (t *Tui) getGroupProcessListLayout() *tview.Flex {
 
 func (t *Tui) getProcessInfoLayout() *tview.Flex {
 	flex := tview.NewFlex().SetDirection(tview.FlexRow)
-	flex.AddItem(t.getTabsLayout(), 0, 1, false)
+	flex.AddItem(t.tabsLayout, 0, 1, false)
 
 	infoTextViewProportion := 12
 	flex.AddItem(t.infoTextView, 0, infoTextViewProportion, false)
-
-	return flex
-}
-
-func (t *Tui) getTabsLayout() *tview.Flex {
-	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
-
-	flex.AddItem(createButton("Info", func() {
-		t.showInfo()
-	}), 0, 1, false)
-	flex.AddItem(createButton("Stdout Logs", func() {
-		t.tailStdoutLogs()
-	}), 0, 1, false)
-	flex.AddItem(createButton("Stderr Logs", func() {
-		t.tailStderrLogs()
-	}), 0, 1, false)
-
-	flex.SetBorder(true)
 
 	return flex
 }
