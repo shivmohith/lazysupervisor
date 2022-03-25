@@ -3,11 +3,9 @@ package tui
 import (
 	"time"
 
-	"github.com/gdamore/tcell/v2"
 	"github.com/rivo/tview"
 	gosupervisord "github.com/shivmohith/go-supervisord"
 	"github.com/shivmohith/tui-supervisor/supervisord"
-	log "github.com/sirupsen/logrus"
 )
 
 type Tui struct {
@@ -19,7 +17,7 @@ type Tui struct {
 	layout *tview.Flex
 
 	headerLayout *tview.TextView
-	// footerLayout *tview.TextView
+	footerLayout *tview.TextView
 
 	groupLayout   *tview.List
 	processLayout *tview.List
@@ -41,6 +39,7 @@ func New(client supervisord.Client) *Tui {
 	t.app = tview.NewApplication()
 
 	t.setHeader()
+	t.setFooter()
 
 	t.groupToProcessesInfo = t.getGroupProcessesMap()
 
@@ -72,7 +71,7 @@ func (t *Tui) refreshGroupsAndProcesses() {
 		}
 	}
 
-	// Remove groups from the group list that have removed from supervisord
+	// Remove groups from the group list that have been removed from supervisord
 	for g := range t.groupToProcessesInfo {
 		gCopy := g
 		if _, ok := gTop[gCopy]; !ok {
@@ -87,7 +86,7 @@ func (t *Tui) refreshGroupsAndProcesses() {
 }
 
 func (t *Tui) Start() error {
-	log.Info("Starting the tui app")
+	t.captureKeyboardEvents()
 
 	runEvery(1*time.Second, func() {
 		t.refreshGroupsAndProcesses()
@@ -96,36 +95,13 @@ func (t *Tui) Start() error {
 	return t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run()
 }
 
-func (t *Tui) setHeader() {
-	header := tview.NewTextView()
-	header.SetText("Welcome to Supervisor TUI")
-	header.SetTextAlign(tview.AlignCenter)
-	header.SetBorderPadding(1, 1, 1, 1)
-	header.SetBackgroundColor(tcell.ColorBlueViolet)
-
-	t.headerLayout = header
-}
-
 func (t *Tui) setLayout() {
 	mainLayoutProportion := 12
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
 		AddItem(t.headerLayout, 0, 1, false).
-		AddItem(t.getMainLayout(), 0, mainLayoutProportion, false)
-
-	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyTab:
-			t.app.SetFocus(t.panels[t.currentPanelInFocusPosition])
-			t.currentPanelInFocusPosition++
-
-			if int(t.currentPanelInFocusPosition) > len(t.panels) {
-				t.currentPanelInFocusPosition = 1
-			}
-		}
-
-		return event
-	})
+		AddItem(t.getMainLayout(), 0, mainLayoutProportion, false).
+		AddItem(t.footerLayout, 0, 1, false)
 
 	t.layout = flex
 }

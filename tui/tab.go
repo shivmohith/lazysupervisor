@@ -19,6 +19,7 @@ func (t *Tui) setTabsLayout() {
 	}), 0, 1, false)
 
 	flex.SetBorder(true)
+	flex.SetTitle("Tabs")
 
 	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
@@ -26,10 +27,13 @@ func (t *Tui) setTabsLayout() {
 			switch event.Rune() {
 			case '1':
 				t.app.SetFocus(flex.GetItem(0))
+				t.showInfo()
 			case '2':
 				t.app.SetFocus(flex.GetItem(1))
+				t.tailStdoutLogs()
 			case '3':
 				t.app.SetFocus(flex.GetItem(2))
+				t.tailStderrLogs()
 			}
 		}
 
