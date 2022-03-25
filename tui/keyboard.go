@@ -6,8 +6,7 @@ func (t *Tui) captureKeyboardEvents() {
 	t.app.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
 		switch event.Key() {
 		case tcell.KeyRune:
-			switch event.Rune() {
-			case 'q':
+			if event.Rune() == 'q' {
 				t.app.Stop()
 			}
 		case tcell.KeyTab:

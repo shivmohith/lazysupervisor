@@ -5,6 +5,12 @@ import (
 	"github.com/rivo/tview"
 )
 
+const (
+	infoTabPosition   = 0
+	stdoutTabPosition = 1
+	stderrTabPosition = 2
+)
+
 func (t *Tui) setTabsLayout() {
 	flex := tview.NewFlex().SetDirection(tview.FlexColumn)
 
@@ -22,17 +28,16 @@ func (t *Tui) setTabsLayout() {
 	flex.SetTitle("Tabs")
 
 	flex.SetInputCapture(func(event *tcell.EventKey) *tcell.EventKey {
-		switch event.Key() {
-		case tcell.KeyRune:
+		if event.Key() == tcell.KeyRune {
 			switch event.Rune() {
 			case '1':
-				t.app.SetFocus(flex.GetItem(0))
+				t.app.SetFocus(flex.GetItem(infoTabPosition))
 				t.showInfo()
 			case '2':
-				t.app.SetFocus(flex.GetItem(1))
+				t.app.SetFocus(flex.GetItem(stdoutTabPosition))
 				t.tailStdoutLogs()
 			case '3':
-				t.app.SetFocus(flex.GetItem(2))
+				t.app.SetFocus(flex.GetItem(stderrTabPosition))
 				t.tailStderrLogs()
 			}
 		}

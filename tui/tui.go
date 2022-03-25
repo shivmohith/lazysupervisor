@@ -35,9 +35,12 @@ func New(client supervisord.Client) *Tui {
 	t := new(Tui)
 
 	t.client = client
-
 	t.app = tview.NewApplication()
 
+	return t
+}
+
+func (t *Tui) BuildLayout() {
 	t.setHeader()
 	t.setFooter()
 
@@ -47,14 +50,23 @@ func New(client supervisord.Client) *Tui {
 	t.setProcessLayout()
 	t.setTabsLayout()
 	t.setInfoTextView()
-	t.setLayout()
+
+	t.setAppLayout()
 
 	t.selectedGroup, _ = t.groupLayout.GetItemText(t.groupLayout.GetCurrentItem())
 	t.selectedProcess, _ = t.processLayout.GetItemText(t.processLayout.GetCurrentItem())
 
 	t.setPanels()
+}
 
-	return t
+func (t *Tui) Start() error {
+	t.captureKeyboardEvents()
+
+	runEvery(1*time.Second, func() {
+		t.refreshGroupsAndProcesses()
+	})
+
+	return t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run()
 }
 
 func (t *Tui) refreshGroupsAndProcesses() {
@@ -86,17 +98,7 @@ func (t *Tui) refreshGroupsAndProcesses() {
 	}
 }
 
-func (t *Tui) Start() error {
-	t.captureKeyboardEvents()
-
-	runEvery(1*time.Second, func() {
-		t.refreshGroupsAndProcesses()
-	})
-
-	return t.app.SetRoot(t.layout, true).SetFocus(t.layout).EnableMouse(true).Run()
-}
-
-func (t *Tui) setLayout() {
+func (t *Tui) setAppLayout() {
 	mainLayoutProportion := 12
 
 	flex := tview.NewFlex().SetDirection(tview.FlexRow).
