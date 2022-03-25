@@ -63,8 +63,9 @@ func (t *Tui) refreshGroupsAndProcesses() {
 	// Adds new groups created to the group list
 	for g, pMap := range gTop {
 		gCopy := g
+		t.groupToProcessesInfo[gCopy] = pMap
+
 		if _, ok := t.groupToProcessesInfo[gCopy]; !ok {
-			t.groupToProcessesInfo[gCopy] = pMap
 			t.groupLayout.AddItem(gCopy, "", 0, func() {
 				t.handleGroupSelect(gCopy)
 			})
