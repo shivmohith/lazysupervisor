@@ -1,7 +1,6 @@
 package main
 
 import (
-	"fmt"
 	"io"
 	"os"
 
@@ -11,27 +10,17 @@ import (
 )
 
 func main() {
-	// nolint:gomnd
-	logFileHandler, err := os.OpenFile(
-		"/home/shivmohith/go_personal_projects/tui-supervisor/tui.log",
-		os.O_APPEND|os.O_CREATE|os.O_RDWR,
-		0666,
-	)
-	if err != nil {
-		fmt.Printf("error opening file: %v", err)
-	}
-
-	initializeLogger(logFileHandler)
+	initializeLogger(os.Stdout)
 
 	client, err := supervisord.NewClient()
 	if err != nil {
-		log.Fatalf("failed to get new supervisord client because %v", err)
+		log.Fatalf("getting new supervisord client: %v", err)
 	}
 
 	app := tui.New(client)
 
 	if err := app.Start(); err != nil {
-		log.Fatalf("failed to start the tui app because %v", err)
+		log.Fatalf("starting the tui app: %v", err)
 	}
 }
 
