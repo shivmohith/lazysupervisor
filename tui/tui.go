@@ -72,30 +72,33 @@ func (t *Tui) Start() error {
 func (t *Tui) refreshGroupsAndProcesses() {
 	gTop := t.getGroupProcessesMap()
 
-	// Adds new groups created to the group list
-	for g, pMap := range gTop {
-		gCopy := g
-		t.groupToProcessesInfo[gCopy] = pMap
+	t.app.QueueUpdateDraw(func() {
+		// Adds new groups created to the group list
+		for g, pMap := range gTop {
+			gCopy := g
 
-		if _, ok := t.groupToProcessesInfo[gCopy]; !ok {
-			t.groupLayout.AddItem(gCopy, "", 0, func() {
-				t.handleGroupSelect(gCopy)
-			})
-		}
-	}
-
-	// Remove groups from the group list that have been removed from supervisord
-	for g := range t.groupToProcessesInfo {
-		gCopy := g
-		if _, ok := gTop[gCopy]; !ok {
-			indices := t.groupLayout.FindItems(gCopy, "", false, false)
-			if len(indices) == 0 {
-				continue
+			if _, ok := t.groupToProcessesInfo[gCopy]; !ok {
+				t.groupLayout.AddItem(gCopy, "", 0, func() {
+					t.handleGroupSelect(gCopy)
+				})
 			}
 
-			t.groupLayout.RemoveItem(indices[0])
+			t.groupToProcessesInfo[gCopy] = pMap
 		}
-	}
+
+		// Remove groups from the group list that have been removed from supervisord
+		for g := range t.groupToProcessesInfo {
+			gCopy := g
+			if _, ok := gTop[gCopy]; !ok {
+				indices := t.groupLayout.FindItems(gCopy, "", false, false)
+				if len(indices) == 0 {
+					continue
+				}
+
+				t.groupLayout.RemoveItem(indices[0])
+			}
+		}
+	})
 }
 
 func (t *Tui) setAppLayout() {
