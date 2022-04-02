@@ -1,4 +1,4 @@
-module github.com/shivmohith/tui-supervisor
+module github.com/shivmohith/lazysupervisor
 
 go 1.16
 

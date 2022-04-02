@@ -4,8 +4,8 @@ import (
 	"io"
 	"os"
 
-	"github.com/shivmohith/tui-supervisor/supervisord"
-	"github.com/shivmohith/tui-supervisor/tui"
+	"github.com/shivmohith/lazysupervisor/supervisord"
+	"github.com/shivmohith/lazysupervisor/tui"
 	log "github.com/sirupsen/logrus"
 )
 
@@ -18,6 +18,8 @@ func main() {
 	}
 
 	app := tui.New(client)
+
+	app.BuildLayout()
 
 	if err := app.Start(); err != nil {
 		log.Fatalf("starting the tui app: %v", err)

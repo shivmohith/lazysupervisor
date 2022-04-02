@@ -5,7 +5,7 @@ import (
 
 	"github.com/rivo/tview"
 	gosupervisord "github.com/shivmohith/go-supervisord"
-	"github.com/shivmohith/tui-supervisor/supervisord"
+	"github.com/shivmohith/lazysupervisor/supervisord"
 )
 
 type Tui struct {
