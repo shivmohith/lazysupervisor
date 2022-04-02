@@ -4,6 +4,9 @@
 A simple terminal UI for supervisor, written in Go with the [tview](https://github.com/rivo/tview) library.
 It is inspired by the TUI built for docker and docker-compose called [lazydocker](https://github.com/jesseduffield/lazydocker).
 
+
+![](/assets/lazysupervisor.gif)
+
 ## Features
 
 - View groups and processes
